@@ -1,0 +1,137 @@
+[gd_scene load_steps=13 format=2]
+
+[ext_resource path="res://Player.gd" type="Script" id=1]
+[ext_resource path="res://Bullet.tscn" type="PackedScene" id=2]
+[ext_resource path="res://assets/muzzle_02.png" type="Texture" id=3]
+[ext_resource path="res://assets/audio/shot.ogg" type="AudioStream" id=4]
+[ext_resource path="res://assets/audio/player explosion.ogg" type="AudioStream" id=5]
+[ext_resource path="res://assets/player.png" type="Texture" id=6]
+[ext_resource path="res://assets/cannon.png" type="Texture" id=7]
+
+[sub_resource type="Animation" id=1]
+resource_name = "Idle"
+tracks/0/type = "value"
+tracks/0/path = NodePath("Shape:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Vector2( 1, 1 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("Shape:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Vector2( 0, 0 ) ]
+}
+
+[sub_resource type="Animation" id=2]
+length = 0.5
+tracks/0/type = "value"
+tracks/0/path = NodePath("Shape:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.5 ),
+"transitions": PoolRealArray( 0.406126, 1 ),
+"update": 0,
+"values": [ Vector2( 1, 0.5 ), Vector2( 1, 1 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("Shape:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 0.5 ),
+"transitions": PoolRealArray( 0.406, 1 ),
+"update": 0,
+"values": [ Vector2( 0, 16 ), Vector2( 0, 0 ) ]
+}
+
+[sub_resource type="Curve2D" id=3]
+_data = {
+"points": PoolVector2Array( 0, 0, 0, 0, 0, -32, 0, 0, 0, 0, 24, -24, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 24, 24, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, -24, 24, 0, 0, 0, 0, -32, 0, 0, 0, 0, 0, -24, -24, 0, 0, 0, 0, 0, -32 )
+}
+
+[sub_resource type="Curve" id=4]
+bake_resolution = 50
+_data = [ Vector2( 0.0116279, 0.970455 ), 0.0, 0.0, 0, 0, Vector2( 0.488372, 0.511364 ), -1.2204, -1.2204, 0, 0, Vector2( 0.982558, 0 ), 0.0, 0.0, 0, 0 ]
+
+[sub_resource type="CircleShape2D" id=5]
+radius = 32.0
+
+[node name="Player" type="RigidBody2D"]
+collision_mask = 26
+mode = 2
+gravity_scale = 0.0
+contacts_reported = 1
+contact_monitor = true
+linear_damp = 4.0
+script = ExtResource( 1 )
+Bullet = ExtResource( 2 )
+
+[node name="Body" type="Sprite" parent="."]
+texture = ExtResource( 6 )
+
+[node name="Cannon" type="Node2D" parent="."]
+
+[node name="Shape" type="Sprite" parent="Cannon"]
+texture = ExtResource( 7 )
+offset = Vector2( 0, -20 )
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Cannon"]
+autoplay = "Idle"
+anims/Idle = SubResource( 1 )
+anims/Shoot = SubResource( 2 )
+
+[node name="CannonPath" type="Path2D" parent="."]
+curve = SubResource( 3 )
+
+[node name="Aim" type="PathFollow2D" parent="CannonPath"]
+position = Vector2( 0, -32 )
+rotation = 0.32175
+
+[node name="Muzzle" type="CPUParticles2D" parent="CannonPath/Aim"]
+position = Vector2( 0, -64 )
+emitting = false
+amount = 1
+lifetime = 0.15
+one_shot = true
+texture = ExtResource( 3 )
+direction = Vector2( 0, 0 )
+gravity = Vector2( 0, 0 )
+scale_amount = 5.0
+scale_amount_curve = SubResource( 4 )
+color = Color( 1, 1, 0, 0.901961 )
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource( 5 )
+
+[node name="ShootTimer" type="Timer" parent="."]
+wait_time = 0.15
+one_shot = true
+
+[node name="ShotSound" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource( 4 )
+volume_db = -12.0
+
+[node name="ExplosionSound" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource( 5 )
+volume_db = -6.0
+
+[connection signal="body_entered" from="." to="." method="_on_Player_body_entered"]
+[connection signal="animation_finished" from="Cannon/AnimationPlayer" to="." method="_on_AnimationPlayer_animation_finished"]
